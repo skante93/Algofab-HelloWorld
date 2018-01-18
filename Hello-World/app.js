@@ -18,12 +18,26 @@ var DAYTIMES = ['morning', 'evening', 'night'];
 
 
 var handler = function(req, res, next){
+
+
 	var first, last, returnContentType = (res.locals.outformat == "xml" || res.locals.outformat == "json")?'application/'+res.locals.outformat : "text/html";
+	var delayResponse = ("delay" in req.query)? true : false;
+
+	var myRenderer = function(template, renderParameters){
+		//
+		console.log("Delay : "+delayResponse);
+		if(!delayResponse)
+			res.render(template, renderParameters);
+		else
+			setTimeout(function(){ res.render(template, renderParameters); }, 1000*Math.floor( Math.random()*(10-5)+5 ));
+	}
+
+
 	if(req.method === 'GET'){
 		console.log("METHOD IS GET");
 		if(!req.query.firstname){
 			res.set('Content-Type', returnContentType);
-			return res.render("index", { outformat : res.locals.outformat, status : "Error", message : "Firstname is required" });
+			return myRenderer("index", { outformat : res.locals.outformat, status : "Error", message : "Firstname is required" });
 		}
 
 		first = req.query.firstname.replace(/\ /g, "\\ "); 
@@ -32,7 +46,7 @@ var handler = function(req, res, next){
 	else if(req.method === 'POST'){
 		if(!req.body.firstname){
 			res.set('Content-Type', returnContentType);
-			return res.render("index", { outformat : res.locals.outformat, status : "Error", message : "Firstname is required" });
+			return myRenderer("index", { outformat : res.locals.outformat, status : "Error", message : "Firstname is required" });
 		}
 
 		first = req.body.firstname.replace(/\ /g, "\\ "); 
@@ -40,7 +54,7 @@ var handler = function(req, res, next){
 	}
 	else {
 		res.set('Content-Type', returnContentType);
-		return res.render("index", { outformat : res.locals.outformat, status : "Error", message : "Only GET and POST is accepted" });
+		return myRenderer("index", { outformat : res.locals.outformat, status : "Error", message : "Only GET and POST is accepted" });
 	}
 
 
@@ -50,7 +64,7 @@ var handler = function(req, res, next){
 	exec(cmd, (error, stdout, stderr) => {
 		console.log(`error : ${error}, stdout : ${stdout}, stderr : ${stderr}`);
 		res.set('Content-Type', returnContentType);
-		res.render("index", { outformat : res.locals.outformat, status : "success", message : stdout.replace(/\n$/, "") });
+		myRenderer("index", { outformat : res.locals.outformat, status : "success", message : stdout.replace(/\n$/, "") });
 	});
 }
 
